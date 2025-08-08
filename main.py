@@ -156,7 +156,7 @@ async def get_start_date(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         # Формирование ответа
         if current_dose_info:
             msg = (
-                f"На {today.strftime('%d.%m.%Y')} дозировка: {current_dose_info[1]} мл\n"
+                f"На {today.strftime('%d.%m.%Y')} дозировка на сегодня: {dose} мл\n"
                 f"Курс: {start_date.strftime('%d.%m.%Y')} → {end_date.strftime('%d.%m.%Y')}\n"
                 f"Доза: {min_dose} → {max_dose} (шаг: {step} мл)"
             )
