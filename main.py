@@ -32,7 +32,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     reply_keyboard = [["Получить расчет"], ["Скачать расписание"]]
 
     await update.message.reply_text(
-        "Привет! Я помогу рассчитать дозировку.\n"
+        "Привет! Я помогу рассчитать дозировку витамина.\n"
         "Выберите действие:",
         reply_markup=ReplyKeyboardMarkup(
             reply_keyboard, one_time_keyboard=True,
@@ -109,10 +109,6 @@ async def get_start_date(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         start_date = datetime.strptime(date_str, "%d.%m.%Y").date()
         today = datetime.now().date()
 
-        if start_date > today:
-            await update.message.reply_text("Дата начала не может быть в будущем!")
-            return GET_START_DATE
-
         weight = user_data['weight']
         min_dose = user_data['min_dose']
 
@@ -147,25 +143,38 @@ async def get_start_date(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             schedule.append((current_date, round(current_dose, 2)))
             current_date += timedelta(days=1)
 
-        # Текущая доза
-        current_dose_info = next(
-            ((date, dose) for date, dose in schedule if date <= today),
-            None
-        )
+        # Определение текущего статуса
+        if today < start_date:
+            days_until_start = (start_date - today).days
+            dose_status = (
+                f"Курс начнётся через {days_until_start} дней ({start_date.strftime('%d.%m.%Y')})\n"
+                f"Стартовая доза: {min_dose} мл"
+            )
+        elif today > end_date:
+            dose_status = "Курс уже завершён"
+        else:
+            # Находим текущую дозу
+            current_dose_value = min_dose
+            for date, dose in schedule:
+                if date <= today:
+                    current_dose_value = dose
+                else:
+                    break
+            
+            dose_status = f"Сегодня ({today.strftime('%d.%m.%Y')}) ваша доза: {current_dose_value} мл"
 
         # Формирование ответа
-        if current_dose_info:
-            msg = (
-                f"На {today.strftime('%d.%m.%Y')} дозировка на сегодня: {current_dose_info[1]} мл\n"
-                f"Курс: {start_date.strftime('%d.%m.%Y')} → {end_date.strftime('%d.%m.%Y')}\n"
-                f"Доза: {min_dose} → {max_dose} (шаг: {step} мл)"
-            )
-        else:
-            msg = f"Курс начнется {start_date.strftime('%d.%m.%Y')}. Стартовая доза: {min_dose} мл"
+        msg = (
+            f"Ваш вес: {weight} кг\n"
+            f"Дата начала курса: {start_date.strftime('%d.%m.%Y')}\n"
+            f"Дата окончания курса: {end_date.strftime('%d.%m.%Y')}\n"
+            f"Шаг изменения дозы: {step} мл\n\n"
+            f"{dose_status}"
+        )
 
         await update.message.reply_text(msg)
 
-        # Сохранение и отправка файла
+        # Сохранение и отправка файла (даже если курс в будущем)
         filename = f"vitamin_schedule_{update.effective_user.id}.txt"
         with open(filename, "w") as f:
             f.write("Дата\t\tДоза (мл)\n")
@@ -174,7 +183,7 @@ async def get_start_date(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
         await update.message.reply_document(
             document=open(filename, "rb"),
-            caption="Полное расписание"
+            caption="Полное расписание курса"
         )
 
         # Кнопка для повторного скачивания
