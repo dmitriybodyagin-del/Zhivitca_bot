@@ -197,8 +197,8 @@ async def get_start_date(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         elif today > datetime.strptime(user_data['end_date'], "%d.%m.%Y").date():
             status = "Курс завершён"
         else:
-            current = next((x for x in schedule if datetime.strptime(x['date'], "%d.%m.%Y").date() <= today), None)
-            status = f"Сегодня доза: {current['dose']} мл" if current else "Ошибка определения дозы"
+            #current = next((x for x in schedule if datetime.strptime(x['date'], "%d.%m.%Y").date() <= today), None)
+            status = f"Сегодня доза: {current_dose} мл"
 
         await update.message.reply_text(
             f"Даты: {user_data['start_date']} - {user_data['end_date']}\n"
