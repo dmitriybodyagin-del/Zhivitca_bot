@@ -202,7 +202,7 @@ async def get_start_date(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
         await update.message.reply_text(
             f"Даты: {user_data['start_date']} - {user_data['end_date']}\n"
-            f"Шаг: {step} мл\n{status}"
+            f"Шаг: {step} мл"
         )
 
         # Отправка файла
